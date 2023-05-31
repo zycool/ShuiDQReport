@@ -10,12 +10,18 @@ import os
 import subprocess
 import sys
 import time
-
+import ctypes
 import pandas as pd
 import datetime
 from inspect import currentframe, stack, getmodule
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
+
+
+def get_screen_size():
+    user32 = ctypes.windll.user32
+    screen_size0 = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+    return screen_size0
 
 
 def get_root_path():

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} 因子相关性 {% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            <h2>因子相关性 ({{ the_date }})</h2>
+            {% include 'mult_factor/factors_pool/inc_corr.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

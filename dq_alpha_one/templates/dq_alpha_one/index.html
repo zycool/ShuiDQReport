@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+
+{% block content %}
+
+    <div class="row justify-content-center">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            <h2>碓泉可变阿尔法成长一号私募证券投资基金----净值展现</h2>
+            {% include 'dq_alpha_one/inc_alpha_all.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+    <hr>
+    {% include 'dq_alpha_one/inc_alpha_dmap.html' %}
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

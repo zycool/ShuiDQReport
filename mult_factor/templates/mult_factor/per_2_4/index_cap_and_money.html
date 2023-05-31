@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}策略 | 各组合市值 & 成交金额 {% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+
+{% block content %}
+
+    <div class="row justify-content-center">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            {% include 'mult_factor/alpha_one/inc_table.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            {% include 'mult_factor/per_2/inc_table.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            {% include 'mult_factor/per_2_4/inc_table.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

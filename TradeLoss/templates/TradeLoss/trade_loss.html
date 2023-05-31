@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% endblock %}
+
+{% block extrahead %}
+
+{% endblock %}
+
+
+{% block content %}
+    <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            <h2>综合统计</h2>
+            {% include 'TradeLoss/inc_trade_loss.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block footer %}{% endblock %}

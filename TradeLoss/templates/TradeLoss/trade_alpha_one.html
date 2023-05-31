@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% endblock %}
+
+{% block extrahead %}
+
+{% endblock %}
+
+
+{% block content %}
+    <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            <h2>摩擦损失绝对值与产品规模的关系</h2>
+            {% include 'dq_alpha_one/alpha_and_trade_loss.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block footer %}{% endblock %}

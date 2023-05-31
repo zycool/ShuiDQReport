@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+
+{% block content %}
+
+
+    <div  class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-5">{{ div| safe }}</div>
+        <div class="col-md-auto"></div>
+        <div class="col col-5">
+            {% include 'mult_factor/F_C/weights_table.html' %}
+        </div>
+    </div>
+    <hr>
+    <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-5">{% include 'mult_factor/F_C/weights_scatter.html' %}</div>
+        <div class="col-md-auto"></div>
+        <div class="col col-5">{% include 'mult_factor/F_C/weights_3d.html' %}</div>
+    </div>
+
+    <hr>
+    <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            <h2></h2>
+            {% include 'mult_factor/F_C/weights_boxes.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block footer %}
+    {{ script| safe }}
+{% endblock %}

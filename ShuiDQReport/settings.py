@@ -25,6 +25,7 @@ SECRET_KEY = 'django-insecure-9(7y7sc!840xq4udoo*3&pc4m=#)y9hotd$1(u@-jnhr)lu*ep
 DEBUG = True
 
 ALLOWED_HOSTS = ['*', ]
+X_FRAME_OPTIONS = 'ALLOWALL'
 
 # Application definition
 
@@ -35,6 +36,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'TradeLoss',
+    'mult_factor',
+    'dq_alpha_one',
+    'layer_bt',
 ]
 
 MIDDLEWARE = [
@@ -135,3 +140,7 @@ else:
     DATABASE_STRATEGY = 'strategy'
     DATABASE_BACKTEST = 'backtest'
     DATABASE_STAT = 'statistic'
+
+SHAP_DAYS = 365
+ANNU_DAYS = 250
+MONT_DAYS = 20

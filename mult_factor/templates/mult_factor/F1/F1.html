@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}复合因子 F1  {% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            <h2>F1复合因子分层检测收益数据，平均涨跌幅(%) & 基准涨跌幅(%) & 夏普比率</h2>
+            {% include 'mult_factor/F1/inc_F1_chg.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+    <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            <h2>F1复合因子({{ the_date }}) -->> 分组 市值规模 & 行业暴露度</h2>
+            {% include 'mult_factor/F1/inc_F1_inds.html' %}
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

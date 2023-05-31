@@ -12,7 +12,7 @@ import hvplot.pandas
 import numpy as np
 import pandas as pd
 import pymongo
-from ShuiDQReport.settings import CLIENT, DATABASE_STAT, DATABASE_BASIC
+from ShuiDQReport.settings import CLIENT, DATABASE_STAT, DATABASE_BASIC, BASE_DIR
 from bokeh.plotting import show
 
 pd.options.plotting.backend = 'holoviews'
@@ -53,15 +53,16 @@ class ViewHvplot:
                 self.get_latest_cent_to_bar() +
                 self.get_cent_to_scatter() +
                 self.get_cent_to_line()).cols(1)
+        print(plot)
         if save:
-            hvplot.save(plot, 'test.html')
+            hvplot.save(plot, str(BASE_DIR) + "/TradeLoss/templates/TradeLoss/inc_trade_loss.html")
         else:
             show(hv.render(plot))
 
     def _load_df_loss(self):
         if self.df_loss is None:
             df_loss = pd.DataFrame(self.db_stat['trade_loss'].find({}, {"_id": 0, }))
-            df_loss.describe(include=[np.number])
+            # df_loss.describe(include=[np.number])
             self.df_loss = df_loss
         return self.df_loss
 
@@ -89,8 +90,7 @@ class ViewHvplot:
         res_hv = df.hvplot.bar(title="最近10个交易日详情",
                                y=['mis_cent', 'mis_mean_cent', 'b_mis_cent', 'b_mis_mean_cent'],
                                ylabel="千分比",
-                               rot=90, legend='top_left',
-                               width=self.width, height=self.high)
+                               rot=90, legend='top_left', width=self.width, )
         if self.show:
             show(hv.render(res_hv))
         return res_hv
@@ -146,6 +146,7 @@ class ViewHvplot:
 
 
 if __name__ == '__main__':
+    # print(str(BASE_DIR) + "/TradeLoss/templates/TradeLoss/iframe_trade_loss.html")
     vh = ViewHvplot()
     vh.save_show()
     # vh.get_describe_to_table()

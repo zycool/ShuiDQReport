@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}杭州水碓泉{% endblock %}
+
+{% block extrahead %}
+{% endblock %}
+
+
+{% block content %}
+    <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-lg-1">
+        </div>
+        <div class="col-md-auto">
+            <h2>量化艺术</h2>
+            <video id="js_video" width="677px" height="540px" autoplay="" controls=""
+                   src="{% static 'video/lhys.mp4' %}"></video>
+        </div>
+        <div class="col col-lg-2">
+        </div>
+    </div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
