@@ -201,3 +201,19 @@ def throw_exception(name):
     print(res.stdout.read())
     print(res.stderr.read())
     time.sleep(2)
+
+
+def get_week_month_date(week=False, month=False):
+    """获取本周（本月）的第一天和最后一天"""
+    today = datetime.datetime.today().date()
+    if week:
+        this_week_start = today - datetime.timedelta(days=today.weekday())
+        this_week_end = today + datetime.timedelta(days=6 - today.weekday())
+        return str(this_week_start), str(this_week_end)
+    elif month:
+        this_month_start = datetime.datetime(today.year, today.month, 1)
+        this_month_end = datetime.datetime(today.year, today.month + 1, 1) - datetime.timedelta(
+            days=1) + datetime.timedelta(
+            hours=23, minutes=59, seconds=59)
+        return str(this_month_start)[:10], str(this_month_end)[:10]
+    return str(today), str(today)

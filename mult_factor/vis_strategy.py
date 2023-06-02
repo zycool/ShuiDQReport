@@ -12,7 +12,6 @@ import hvplot
 import hvplot.pandas  # noqa
 
 import holoviews as hv
-from holoviews.util.transform import dim
 from holoviews import opts
 from holoviews import dim
 

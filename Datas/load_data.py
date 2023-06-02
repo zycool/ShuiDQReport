@@ -6,9 +6,11 @@
 @time: 2023/5/20 19:09
 说明:
 """
+import datetime
 import numpy as np
 import pandas as pd
 import pymongo
+import jqdatasdk as jq
 from ShuiDQReport.settings import CLIENT, DATABASE_STAT, DATABASE_BASIC, DATABASE_STRATEGY, DATABASE_BACKTEST
 from Utils.utils import trans_str_to_float64, get_screen_size
 
@@ -35,6 +37,7 @@ class LoadData(object):
 
         screen_size = get_screen_size()
         self.width1 = int(screen_size[0] * 1 / 3)
+        self.width_h = int(screen_size[0] / 2)
         self.width2 = int(screen_size[0] * 2 / 3)
         self.width3 = int(screen_size[0] * 0.95)
         self.high = self.width1
@@ -233,7 +236,19 @@ class LoadData(object):
         df['year'] = df['净值日期'].dt.year
         return df
 
+    def get_dates_bench_chg(self, date_s='2022-01-01', date_e='2022-12-31'):
+        """拉取基准收益率，为可视化超额展示提供数据"""
+        df = pd.DataFrame(self.db_basic['w_bench_close'].find(
+            {"date": {'$gte': date_s, '$lte': date_e}}, {"_id": 0, }, batch_size=1000000))
+
+        df['沪深300'] = df['000300.SH'] / df.iloc[0]["000300.SH"] - 1
+        df['中证500'] = df['000905.SH'] / df.iloc[0]["000905.SH"] - 1
+
+        df_res = df[['date', '沪深300', '中证500']].copy()
+        return df_res
+
     def get_dates_chg(self, date_s='2022-01-01', date_e='2022-12-31'):
+        """拉取指定日期范围类的全A股票涨跌幅数据"""
         df_chg = pd.DataFrame(self.db_basic['w_stocks_chg'].find(
             {"date": {'$gte': date_s, '$lte': date_e}}, {"_id": 0, }, batch_size=1000000))
         df_chg = trans_str_to_float64(df_chg, trans_cols=['chg', ])
@@ -243,7 +258,42 @@ class LoadData(object):
         return df_chg
 
     def get_layer_factor(self, factor=None, date_s='2022-01-01', date_e='2022-12-31'):
+        """分层回测单调性"""
         df_factor = self.__get_the_factor(factor, date_s=date_s, date_e=date_e)
         df_factor.set_index(['date', 'code'], inplace=True)
         df_factor.sort_index(inplace=True)
         return df_factor
+
+    def get_group_by_cap_chg(self, date_s=None, date_e=None):
+        if self.the_date is None:
+            self.get_the_date()
+        if date_s is None or date_e is None:
+            df = pd.DataFrame(self.db_basic['w_stocks_daily'].find(
+                {'date': self.the_date, 'paused': 0},
+                {"_id": 0, 'date': 1, "code": 1, "market_cap": 1, 'chg': 1}))
+        else:
+            df = pd.DataFrame(self.db_basic['w_stocks_daily'].find(
+                {'date': {'$gte': date_s, '$lte': date_e}, 'paused': 0},
+                {"_id": 0, 'date': 1, "code": 1, "market_cap": 1, 'chg': 1}))
+        return df
+
+    def get_jq_today(self):
+        today = datetime.date.today()
+        jq.auth('17301739834', 'Shdq2021Shdq2021')
+        print("今天还有 {} 数据查询量".format(jq.get_query_count()['spare']))
+        trades = jq.get_trade_days(count=1).tolist()  # 返回截至到今日的前面交易日期（含今日）
+        if today not in trades:
+            raise Exception("今天 {} 不是交易日，不用运行！！")
+        if datetime.datetime.now().hour < 15:
+            raise Exception("还没收盘呢，不能运行！！")
+        df_all_stock = jq.get_all_securities(date=today)  # 获取该天所有股票数据，返回DataFrame
+        code_list = df_all_stock.index.tolist()
+        columns = ['close', 'pre_close']
+
+        df_today = jq.get_price(code_list, fields=columns, count=1, end_date=today, panel=False, frequency='1d',
+                                skip_paused=True)
+        df_today['chg'] = df_today.close / df_today.pre_close - 1
+        df_today['code'] = df_today.code.map(lambda x: 'SH' + x[:6] if x.startswith('6') else 'SZ' + x[:6])
+        df_today.insert(0, 'date', str(today))
+        jq.logout()
+        return df_today

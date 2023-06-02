@@ -18,8 +18,8 @@ from holoviews import opts
 from ShuiDQReport.settings import BASE_DIR
 from Datas.load_data import LoadData
 
-hv.extension('bokeh')
 pd.options.plotting.backend = 'holoviews'
+hv.extension('bokeh')
 
 
 class FactorView(object):
@@ -38,6 +38,7 @@ class FactorView(object):
 
     def html_chg_by_group(self):
         df = self.ld.get_chg_factor(factor=self.factor)
+        df.reset_index(inplace=True, drop=True)
         group_num = 50
         each_group = df.shape[0] // group_num
         df['bench_chg'] = df.chg.mean()
@@ -116,9 +117,7 @@ class FactorView(object):
 
 if __name__ == '__main__':
     ld = LoadData()
-    factors = ['F1', 'mv_vol',
-               # 'F_C'
-               ]
+    factors = ['F1', 'mv_vol', 'F_C']
     for factor in factors:
         print("生成 {} 相关数据".format(factor))
         f1 = FactorView(ld_data=ld, factor=factor)

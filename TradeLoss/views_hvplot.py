@@ -72,7 +72,7 @@ class ViewHvplot:
         df_loss.set_index('date', inplace=True)
         df = df_loss.describe(include=[np.number]).transpose()
         df.reset_index(inplace=True)
-        res_hv = df.hvplot.table(title="对各个统计字段 做均值、STD等展示",
+        res_hv = df.hvplot.table(title="对历史全量统计字段 做均值、STD等展示",
                                  fit_columns=True, sortable=True, selectable=True,
                                  legend='top_left',
                                  width=self.width)
@@ -85,15 +85,20 @@ class ViewHvplot:
         # 图1：日期序列，所有；展示千分位曲线---相对损失、平均损失
         df = self.df_loss.iloc[-count:].copy()
         df.set_index('date', inplace=True)
-        df = df.round(3) * 1000
+        df_plot = df.round(4) * 1000
 
-        res_hv = df.hvplot.bar(title="最近10个交易日详情",
-                               y=['mis_cent', 'mis_mean_cent', 'b_mis_cent', 'b_mis_mean_cent'],
-                               ylabel="千分比",
-                               rot=90, legend='top_left', width=self.width, )
+        res_hv = df_plot.hvplot.bar(title="最近10个交易日详情",
+                                    y=['mis_cent', 'mis_mean_cent', 'b_mis_cent', 'b_mis_mean_cent'],
+                                    ylabel="千分比", rot=90, legend='top_left', width=self.width, )
+        df.sort_index(ascending=False, inplace=True)
+        table = df.hvplot.table(columns=['date', 'mis_sum', 'mis_cent', 'mis_mean_sum', 'mis_mean_cent',
+                                         'b_mis_mean_sum', 'b_mis_mean_cent', ],
+                                sortable=True, selectable=True, width=self.width)
+        lay = res_hv + table
+        lay.opts().cols(1)
         if self.show:
-            show(hv.render(res_hv))
-        return res_hv
+            show(hv.render(lay))
+        return lay
 
     def get_cent_to_scatter(self):
         df1 = self.df_loss[['date', 'mis_cent']].copy()

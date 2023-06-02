@@ -14,12 +14,13 @@ import hvplot.pandas  # noqa
 import holoviews as hv
 from holoviews import opts
 
-from ShuiDQReport.settings import BASE_DIR
+from ShuiDQReport.settings import BASE_DIR, SHAP_DAYS
 from Datas import stat
 from Datas.load_data import LoadData
 
 pd.options.plotting.backend = 'holoviews'
 hv.extension('bokeh')
+pn.extension()
 
 
 class AlphaOweView(object):
@@ -89,11 +90,12 @@ class AlphaOweView(object):
         layout = (line * point_max_back * text_max_back) + spikes
         alpha_chg = df_year.iloc[-1]['累计净值  (元)'] / df_year.iloc[0]['累计净值  (元)'] - 1
         alpha_std = 20 ** 0.5 * df_year.chg.std()
-        alpha_sharp = 365 ** 0.5 * df_year.chg.mean() / df_year.chg.std()
-        title = '{}年 --->>> 收益：{:.2%}，波动率：{:.2%}，年夏普率：{:.2f}'.format(year, alpha_chg, alpha_std,
-                                                                               alpha_sharp)
+        alpha_sharp = SHAP_DAYS ** 0.5 * df_year.chg.mean() / df_year.chg.std()
+        title = '{}年 --->>> 收益：{:.2%}，波动率：{:.2%}，年化夏普率：{:.2f}'.format(year, alpha_chg, alpha_std,
+                                                                                 alpha_sharp)
         layout.opts(
-            opts.Curve(framewise=True, height=self.ld.high, width=self.ld.width2, tools=['hover'], title=title, ),
+            opts.Curve(framewise=True, height=self.ld.high, width=self.ld.width2, tools=['hover'], title=title,
+                       show_grid=True),
             opts.Spikes(framewise=True, height=150, width=self.ld.width2, tools=['hover'], ),
             opts.Points(framewise=True, color='red', size=5),
         ).cols(1)
@@ -105,8 +107,7 @@ class AlphaOweView(object):
         variable = pn.widgets.Select(options=year_list)
         pn.Column(variable, )
         dmap = hv.DynamicMap(pn.bind(self._load_by_year, year=variable))
-        app = pn.Row(pn.WidgetBox('## 按年展现', variable),
-                     dmap.opts(framewise=True)).servable()
+        app = pn.Column(pn.WidgetBox('## 按年展现', variable), dmap.opts(framewise=True)).servable()
         print(app)
         app.save(self.inc_dir + "inc_alpha_dmap.html", embed=True)
 
@@ -126,7 +127,7 @@ class AlphaOweView(object):
         # 策略年化收益率
         alpha_annual = (df_plot.iloc[-1]['累计净值  (元)']) ** (250 / df_plot.chg.size) - 1
         alpha_std = 20 ** 0.5 * df_plot.chg.std()
-        alpha_sharp = 365 ** 0.5 * df_plot.chg.mean() / df_plot.chg.std()
+        alpha_sharp = SHAP_DAYS ** 0.5 * df_plot.chg.mean() / df_plot.chg.std()
         title = '【{} - {}】总收益：{:.2%}，年化收益：{:.2%}，波动率：{:.2%}，年化夏普率：{:.2f}'.format(
             str(df_plot.iloc[0]['净值日期'])[:10], str(df_plot.iloc[-1]['净值日期'])[:10],
             alpha_chg, alpha_annual, alpha_std, alpha_sharp)
@@ -141,11 +142,72 @@ class AlphaOweView(object):
         #
         layout.opts(
             opts.Curve(height=self.ld.high, width=self.ld.width2, xaxis=None, line_width=1.50, color='red',
-                       tools=['hover'], title=title),
+                       tools=['hover'], title=title, show_grid=True),
             opts.Spikes(height=150, width=self.ld.width2, line_width=0.25)).cols(1)
 
         print(layout)
         hv.save(layout, self.inc_dir + "inc_alpha_all.html")
+
+    def __load_by_bench(self, bench_name="沪深300", bench_r='几何'):
+        df_alpha = self.df_alpha.copy()
+        df_alpha.set_index('净值日期', inplace=True)
+        df_alpha['产品累计涨幅'] = df_alpha['累计净值  (元)'] / df_alpha.iloc[0]['累计净值  (元)'] - 1
+
+        df_bench = self.ld.get_dates_bench_chg(str(df_alpha.index[0])[:10], str(df_alpha.index[-1])[:10])
+        df_bench['date'] = pd.to_datetime(df_bench.date)
+        df_bench.set_index('date', inplace=True)
+
+        df = pd.merge(df_alpha, df_bench, left_index=True, right_index=True)
+        df['日期'] = df.index
+
+        curve_alpha = hv.Curve(df, '日期', '产品累计涨幅').opts(color='red')
+
+        if bench_name == "沪深300":
+            curve_bench = hv.Curve(df, '日期', '沪深300').opts(color='blue')
+            if bench_r == '几何':
+                df["超额收益(几何)"] = (df['产品累计涨幅'] + 1) / (df['沪深300'] + 1) - 1
+                curve_more = hv.Curve(df, '日期', '超额收益(几何)').opts(color='#a5bab7')
+                last_more = df.iloc[-1]['超额收益(几何)']
+            else:
+                df["超额收益(算术)"] = df['产品累计涨幅'] - df['沪深300']
+                curve_more = hv.Curve(df, '日期', '超额收益(算术)').opts(color='#a5bab7')
+                last_more = df.iloc[-1]['超额收益(算术)']
+            last_bench = df.iloc[-1]['沪深300']
+        else:
+            curve_bench = hv.Curve(df, '日期', '中证500').opts(color='blue')
+            if bench_r == '几何':
+                df["超额收益(几何)"] = (df['产品累计涨幅'] + 1) / (df['中证500'] + 1) - 1
+                curve_more = hv.Curve(df, '日期', '超额收益(几何)').opts(color='#a5bab7')
+                last_more = df.iloc[-1]['超额收益(几何)']
+            else:
+                df["超额收益(算术)"] = df['产品累计涨幅'] - df['中证500']
+                curve_more = hv.Curve(df, '日期', '超额收益(算术)').opts(color='#a5bab7')
+                last_more = df.iloc[-1]['超额收益(算术)']
+            last_bench = df.iloc[-1]['中证500']
+
+        title = "{} - {} ，本基金收益: {:.2%}，沪深300收益: {:.2%}，超额收益: {:.2%}".format(
+            str(df.iloc[0]['日期'])[:10], str(df.iloc[-1]['日期'])[:10], df.iloc[-1]['产品累计涨幅'], last_bench,
+            last_more)
+
+        layout = curve_alpha * curve_bench * curve_more
+        layout.opts(
+            opts.Curve(height=self.ld.high, width=self.ld.width2, line_width=1.50,
+                       tools=['hover'], title=title, show_grid=True),
+        )
+
+        print(layout)
+
+        return layout
+
+    def html_alpha_more_value(self):
+        variable1 = pn.widgets.Select(name="基准指数", options=['沪深300', '中证500', ])
+        variable2 = pn.widgets.Select(name="超额计算", options=['几何', '算术', ])
+
+        dmap = hv.DynamicMap(pn.bind(self.__load_by_bench, bench_name=variable1, bench_r=variable2))
+        app = pn.Column(pn.WidgetBox('## 基准 - 超额', pn.Row(variable1, variable2)),
+                        dmap.opts(framewise=True)).servable()
+        print(app)
+        app.save(self.inc_dir + "inc_alpha_more_value.html", embed=True)
 
 
 if __name__ == '__main__':
@@ -153,3 +215,4 @@ if __name__ == '__main__':
     alpha.alpha_and_trade_loss()
     alpha.html_alpha_all()
     alpha.html_alpha_dmap()
+    alpha.html_alpha_more_value()

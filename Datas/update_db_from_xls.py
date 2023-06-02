@@ -50,13 +50,13 @@ class InsertDb:
             print(df_csv)
         else:
             table.create_index([("净值日期", pymongo.DESCENDING)], background=True, unique=True)
-        #
+        # print(df_csv)
         insert_db_from_df(table=table, df=df_csv)
 
 
 def update_db():
     inst = InsertDb()
-    inst.insert_db(csv_name='产品净值_碓泉可变阿尔法成长一号私募证券投资基金_2019-02-01_2023-05-22.xlsx')
+    inst.insert_db(csv_name='【产品净值】【分产品】SEY112_碓泉可变阿尔法成长一号私募证券投资基金_2023-05-01_2023-05-31.xlsx')
     inst.close()
 
 
