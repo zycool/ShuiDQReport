@@ -10,6 +10,30 @@
 
 {% block content %}
     <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-lg-1"></div>
+        <div class="col-md-auto">
+            <h2>交易摩擦--每日</h2>
+            {% include 'TradeLoss/inc_laest_sum_and_cent_bar.html' %}
+        </div>
+        <div class="col col-lg-2"></div>
+    </div>
+    <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-lg-1"></div>
+        <div class="col-md-auto">
+            <h2>交易摩擦--每周</h2>
+            {% include 'TradeLoss/inc_freq_weekly.html' %}
+        </div>
+        <div class="col col-lg-2"></div>
+    </div>
+    <div class="row justify-content-center" style="margin-top: 3em">
+        <div class="col col-lg-1"></div>
+        <div class="col-md-auto">
+            <h2>交易摩擦--每月</h2>
+            {% include 'TradeLoss/inc_freq_monthly.html' %}
+        </div>
+        <div class="col col-lg-2"></div>
+    </div>
+    <div class="row justify-content-center" style="margin-top: 3em">
         <div class="col col-lg-1">
         </div>
         <div class="col-md-auto">
@@ -17,6 +41,21 @@
             {% include 'TradeLoss/inc_trade_loss.html' %}
         </div>
         <div class="col col-lg-2">
+            <h3>字段说明</h3>
+            <hr>
+            <p class="font-weight-bold">mis_sum:</p>
+            <p class="font-italic">交易损失金额（相对于13:05）</p>
+            <hr>
+            <p class="font-weight-bold">mis_cent:</p>
+            <p class="font-italic">交易损失比例（= 交易损失金额 / 交易总金额）</p>
+            <hr>
+            <p class="font-weight-bold">mis_mean_sum:</p>
+            <p class="font-italic">平均交易损失金额（相对于【13:05-14:04】的平均价）</p>
+            <hr>
+            <p class="font-weight-bold">mis_mean_cent:</p>
+            <p class="font-italic">平均交易损失比例（= 平均交易损失金额 / 交易总金额）</p>
+            <hr>
+            <p class="font-weight-bold">其他以 'b_' 打头的表示Reblance的</p>
         </div>
     </div>
 

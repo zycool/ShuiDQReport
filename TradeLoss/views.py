@@ -7,7 +7,7 @@
 说明:
 """
 from django.shortcuts import render
-
+from Datas.load_data import LoadData
 
 def trade_loss(request):
     context = {}

@@ -33,7 +33,7 @@ class StatisticView(object):
         self.df_yestoday = self.ld.get_group_by_cap_chg()
         self.df_today = self.ld.get_jq_today()
 
-    def __html_cap(self, df, daily=True):
+    def __html_cap(self, df, daily=True, des=None):
         df_cap = df.sort_values('market_cap')
         df_cap.reset_index(inplace=True, drop=True)
         group_num = 10
@@ -51,12 +51,12 @@ class StatisticView(object):
         if daily:
             title = "交易日：{} 市值分组平均涨跌幅".format(df.iloc[0].date)
         else:
-            title = "交易区间：{} -- {} ， 市值分组平均涨跌幅".format(df.iloc[0].date_s, df.iloc[0].date_e)
+            title = "交易区间：{} -- {}（{}）， 市值分组平均涨跌幅".format(df.iloc[0].date_s, df.iloc[0].date_e, des)
         bar_cap = df_cap.hvplot.bar(x="gro", y="gro_mean_chg_per", width=self.ld.width1, c="color",
                                     xlabel="按市值从小到大分组", ylabel="每组平均涨跌幅", title=title)
         return bar_cap
 
-    def __html_chg(self, df, daily=True):
+    def __html_chg(self, df, daily=True, des=None):
         df_chg = df.sort_values('chg')
         df_chg.reset_index(inplace=True, drop=True)
         df_chg['chg_per'] = df_chg.chg.round(4) * 100
@@ -67,7 +67,7 @@ class StatisticView(object):
         else:
             df_chg['chg_range'] = pd.cut(x=df_chg["chg_per"], bins=list(range(-50, 51, 2)),
                                          labels=list(range(-50, 50, 2)))
-            title = "交易区间：{} -- {} ， 市值分组平均涨跌幅".format(df.iloc[0].date_s, df.iloc[0].date_e)
+            title = "交易区间：{} -- {}（{}）， 市值分组平均涨跌幅".format(df.iloc[0].date_s, df.iloc[0].date_e, des)
         a = df_chg["chg_range"].value_counts(sort=False)
         df_plot = pd.DataFrame({'涨跌幅区间': a.index, "股票数量": a.values})
         df_plot['color'] = np.sign(df_plot['涨跌幅区间'].tolist())
@@ -94,25 +94,25 @@ class StatisticView(object):
         print(layout)
         hv.save(layout, self.inc_dir + "inc_daily.html")
 
-    def __html_range(self, date_s=None, date_e=None):
-        df_week = self.ld.get_group_by_cap_chg(date_s=date_s, date_e=date_e)
+    def __html_range(self, date_s=None, date_e=None, des=None):
+        df_range = self.ld.get_group_by_cap_chg(date_s=date_s, date_e=date_e)
         df_t = self.__deal_with_today()
-        df_week = pd.concat([df_week, df_t])
+        df_range = pd.concat([df_range, df_t])
 
-        ddf = df_week.groupby('code').apply(cal_range_chg_and_cap)
-        layout = self.__html_cap(ddf, daily=False) + self.__html_chg(ddf, daily=False)
+        ddf = df_range.groupby('code').apply(cal_range_chg_and_cap)
+        layout = self.__html_cap(ddf, daily=False, des=des) + self.__html_chg(ddf, daily=False, des=des)
         layout.opts().cols(2)
         print(layout)
         return layout
 
     def html_weekly(self):
         week_s, week_e = get_week_month_date(week=True)
-        layout = self.__html_range(week_s, week_e)
+        layout = self.__html_range(week_s, week_e, des='本周')
         hv.save(layout, self.inc_dir + "inc_weekly.html")
 
     def html_monthly(self):
         month_s, month_e = get_week_month_date(month=True)
-        layout = self.__html_range(month_s, month_e)
+        layout = self.__html_range(month_s, month_e, des='本月')
         hv.save(layout, self.inc_dir + "inc_monthly.html")
 
 

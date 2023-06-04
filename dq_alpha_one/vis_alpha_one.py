@@ -46,7 +46,8 @@ class AlphaOweView(object):
 
         plot_1 = df_plot.plot.scatter(x='净值日期', y='mis_sum', color='DarkBlue', label='交易损失(元)').opts(
             xaxis=None)
-        area1 = df_plot.hvplot.area(x='净值日期', y='mis_sum', label='交易损失(元)', )
+        area1 = df_plot.hvplot.area(x='净值日期', y='mis_sum', label='交易损失(元)',
+                                    title="截至日期：{}".format(df_plot.iloc[-1]['净值日期']))
         line1 = df_plot.hvplot.line(x='净值日期', y='ma10', color='Red', label='交易损失--MA10')
         layout1 = area1 * line1
         layout1.opts(
@@ -59,7 +60,7 @@ class AlphaOweView(object):
         layout2 = area2 * line2
         layout2.opts(
             legend_position='top_left',
-            xaxis=None,
+            # xaxis=None,
         )
 
         layout = plot_1 + layout1 + plot_2 + layout2
@@ -213,6 +214,6 @@ class AlphaOweView(object):
 if __name__ == '__main__':
     alpha = AlphaOweView()
     alpha.alpha_and_trade_loss()
-    alpha.html_alpha_all()
-    alpha.html_alpha_dmap()
-    alpha.html_alpha_more_value()
+    # alpha.html_alpha_all()
+    # alpha.html_alpha_dmap()
+    # alpha.html_alpha_more_value()

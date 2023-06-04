@@ -48,6 +48,8 @@ def proc_open():
     print("摩擦损失数据...")
     vh = ViewHvplot()
     vh.save_show()
+    vh.html_laest_sum_and_cent()
+    vh.html_by_range()
     vh.close()
 
     print("复合因子F_C...")
