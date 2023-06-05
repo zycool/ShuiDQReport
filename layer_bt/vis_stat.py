@@ -34,7 +34,7 @@ class StatisticView(object):
         self.df_today = self.ld.get_jq_today()
 
     def __html_cap(self, df, daily=True, des=None):
-        df_cap = df.sort_values('market_cap')
+        df_cap = df.sort_values('market_cap', ascending=False)
         df_cap.reset_index(inplace=True, drop=True)
         group_num = 10
         each_group = df_cap.shape[0] // group_num
@@ -53,7 +53,7 @@ class StatisticView(object):
         else:
             title = "交易区间：{} -- {}（{}）， 市值分组平均涨跌幅".format(df.iloc[0].date_s, df.iloc[0].date_e, des)
         bar_cap = df_cap.hvplot.bar(x="gro", y="gro_mean_chg_per", width=self.ld.width1, c="color",
-                                    xlabel="按市值从小到大分组", ylabel="每组平均涨跌幅", title=title)
+                                    xlabel="按市值从大到小分组", ylabel="每组平均涨跌幅", title=title)
         return bar_cap
 
     def __html_chg(self, df, daily=True, des=None):

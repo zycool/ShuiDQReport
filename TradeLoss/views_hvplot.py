@@ -171,7 +171,7 @@ class ViewHvplot:
             return
         freqs = df.freq_day.unique().tolist()
         df = df[df.freq_day.isin(freqs[-count:])]
-        df.drop(index=df.mis_cent.idxmin(), inplace=True)  # 为了除掉4.28日的异常值
+        # df.drop(index=df.mis_cent.idxmin(), inplace=True)  # 为了除掉4.28日的异常值
         boxplot_sum = df.hvplot.box(y='mis_sum', by='freq_day', shared_axes=False, tools=['hover'],
                                     title="损失金额（与13：05分相比）分布图，平均值：{:.2f}，单位：万".format(
                                         df.mis_sum.mean()), width=int(self.width / 2), legend=False,
@@ -219,9 +219,47 @@ class ViewHvplot:
         print(res_hv)
         hv.save(res_hv, self.inc_dir + "inc_laest_sum_and_cent_bar.html")
 
+    def html_line_and_area(self):
+        df = self.df_loss.copy()
+        df['mis_sum'] = df.mis_sum / 10000
+        df['mis_cent'] = df.mis_cent.round(4) * 1000
+        df['date'] = pd.to_datetime(df.date)
+
+        df_plot = df[['date', 'mis_sum', 'mis_cent']].copy()
+        # df_plot.drop(index=df_plot.mis_cent.idxmin(), inplace=True)  # 为了除掉4.28日的异常值
+        df_plot['ma10'] = df['mis_sum'].rolling(10).mean()
+        df_plot['ma10_cent'] = df['mis_cent'].rolling(10).mean()
+
+        x_lable = "全量区间【{} - {}】".format(str(df_plot.iloc[0]['date'])[:10], str(df_plot.iloc[-1]['date'])[:10])
+
+        area1 = df_plot.hvplot.area(x='date', y='mis_sum', label='金额(万元)',
+                                    xlabel=x_lable, ylabel="摩擦损失金额",
+                                    title="摩擦损失金额，截至日期：{}".format(str(df_plot.iloc[-1]['date'])[:10]),
+                                    )
+        line1 = df_plot.hvplot.line(x='date', y='ma10', color='Red', label='金额--MA10')
+        layout1 = area1 * line1
+        layout1.opts(
+            legend_position='bottom_left', width=int(self.width / 2)
+        )
+
+        area2 = df_plot.hvplot.area(x='date', y='mis_cent', label='比例(千分比)',
+                                    xlabel=x_lable, ylabel="千分比",
+                                    title="摩擦损失比例，截至日期：{}".format(str(df_plot.iloc[-1]['date'])[:10])
+                                    )
+        line2 = df_plot.hvplot.line(x='date', y='ma10_cent', color='Red', label='比例--MA10', )
+        layout2 = area2 * line2
+        layout2.opts(
+            legend_position='bottom_left', width=int(self.width / 2)
+        )
+        layout = layout1 + layout2
+        layout.opts(shared_axes=False).cols(2)
+        print(layout)
+        hv.save(layout, self.inc_dir + "inc_area_and_lines.html")
+
 
 if __name__ == '__main__':
     vh = ViewHvplot()
     vh.save_show()
     vh.html_laest_sum_and_cent()
     vh.html_by_range()
+    vh.html_line_and_area()
