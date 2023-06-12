@@ -21,6 +21,7 @@ urlpatterns = [
     path('bt_per_2/', views.bt_per_2, name='bt_per_2'),
     path('bt_per_2_4/', views.bt_per_2_4, name='bt_per_2_4'),
     path('bt_cap_and_money/', views.bt_cap_and_money, name='bt_cap_and_money'),
+    path('bt_VaR_and_ES/', views.bt_VaR_ES, name='bt_VaR_and_ES'),
 
     path('corr/', views.corr_about, name='corr_about'),
     path('ics/', views.ics_about, name='ics_about'),

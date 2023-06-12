@@ -52,7 +52,7 @@ class StatisticView(object):
             title = "交易日：{} 市值分组平均涨跌幅".format(df.iloc[0].date)
         else:
             title = "交易区间：{} -- {}（{}）， 市值分组平均涨跌幅".format(df.iloc[0].date_s, df.iloc[0].date_e, des)
-        bar_cap = df_cap.hvplot.bar(x="gro", y="gro_mean_chg_per", width=self.ld.width1, c="color",
+        bar_cap = df_cap.hvplot.bar(x="gro", y="gro_mean_chg_per", width=self.ld.width1, c="color", shared_axes=False,
                                     xlabel="按市值从大到小分组", ylabel="每组平均涨跌幅", title=title)
         return bar_cap
 
@@ -61,18 +61,20 @@ class StatisticView(object):
         df_chg.reset_index(inplace=True, drop=True)
         df_chg['chg_per'] = df_chg.chg.round(4) * 100
         if daily:
-            df_chg['chg_range'] = pd.cut(x=df_chg["chg_per"], bins=list(range(-20, 21, 1)),
-                                         labels=list(range(-20, 20, 1)))
+            bins = list(np.arange(-20.5, 20.5, 1))
+            bins.append(20.5)
+            df_chg['chg_range'] = pd.cut(x=df_chg["chg_per"], bins=bins, labels=list(range(-20, 21, 1)))
             title = "交易日：{} 涨跌幅分布".format(df.iloc[0].date)
         else:
-            df_chg['chg_range'] = pd.cut(x=df_chg["chg_per"], bins=list(range(-50, 51, 2)),
-                                         labels=list(range(-50, 50, 2)))
+            bins = list(np.arange(-30.5, 30.5, 1))
+            bins.append(30.5)
+            df_chg['chg_range'] = pd.cut(x=df_chg["chg_per"], bins=bins, labels=list(range(-30, 31, 1)))
             title = "交易区间：{} -- {}（{}）， 市值分组平均涨跌幅".format(df.iloc[0].date_s, df.iloc[0].date_e, des)
         a = df_chg["chg_range"].value_counts(sort=False)
         df_plot = pd.DataFrame({'涨跌幅区间': a.index, "股票数量": a.values})
         df_plot['color'] = np.sign(df_plot['涨跌幅区间'].tolist())
         bar_chg = df_plot.hvplot.bar(x="涨跌幅区间", y="股票数量", width=self.ld.width_h, c="color", rot=90,
-                                     xlabel="涨跌幅区间(左开，右闭]", title=title)
+                                     shared_axes=False, xlabel="涨跌幅区间", title=title)
         return bar_chg
 
     def __deal_with_today(self):
@@ -81,7 +83,7 @@ class StatisticView(object):
         df_y_for_merge = df_y[['code', 'market_cap']].copy()
         df_t = pd.merge(df_t, df_y_for_merge, on='code')
         df_t['market_cap'] = df_t.market_cap * (df_t.chg + 1)
-        print(df_t)
+        # print(df_t)
         return df_t[['date', 'code', 'market_cap', 'chg']].copy()
 
     def html_daily(self):

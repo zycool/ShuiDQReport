@@ -33,6 +33,11 @@ def bt_cap_and_money(request):
     return render(request, 'mult_factor/per_2_4/index_cap_and_money.html', context)
 
 
+def bt_VaR_ES(request):
+    context = {}
+    return render(request, 'mult_factor/per_2_4/index_VaR_ES.html', context)
+
+
 def mv_vol(request):
     ld = LoadData()
     the_date = ld.get_the_date()

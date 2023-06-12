@@ -23,6 +23,24 @@ pd.options.plotting.backend = 'holoviews'
 hv.extension('bokeh')
 
 
+def cal_VaR_and_ES(series):
+    VaR_60 = series.quantile(0.4)
+    ES_60 = series[series <= VaR_60].mean()
+    VaR_90 = series.quantile(0.1)
+    ES_90 = series[series <= VaR_90].mean()
+    VaR_95 = series.quantile(0.05)
+    ES_95 = series[series <= VaR_95].mean()
+    VaR_99 = series.quantile(0.01)
+    ES_99 = series[series <= VaR_99].mean()
+    VaR_9999 = series.quantile(0.001)
+    ES_9999 = series[series <= VaR_9999].mean()
+    h_VaR = {'60%': [VaR_60, ES_60], '90%': [VaR_90, ES_90], '95%': [VaR_95, ES_95], '99%': [VaR_99, ES_99],
+             '99.99%': [VaR_9999, ES_9999]}
+    # columns = [('1D', 'VaR'), ('1D', 'ES')]
+    # pd.DataFrame.from_dict(h_VaR, orient='index', columns=pd.MultiIndex.from_tuples(columns))
+    return pd.DataFrame.from_dict(h_VaR, orient='index', columns=['VaR', 'ES'])
+
+
 class StrategyView(object):
     def __init__(self, ld, stra_name="alpha_one"):
         self.stra_name = stra_name
@@ -82,10 +100,12 @@ class StrategyView(object):
 
         lay3 = chg5_scatter * chg5_scatter.hist()
         lay3.opts(
+
             # opts.Scatter(color='z', size=dim('size') * 20),
-            opts.Scatter(height=200, width=self.ld.width2, tools=['hover'], title="每日涨跌幅 & 分布"),
+            opts.Scatter(height=200, tools=['hover'], width=self.ld.width2, title="每日涨跌幅 & 分布"),
             opts.Histogram(tools=['hover']),
             # fill_color=hv.dim('y').bin(bins=[-10, 0, 10], labels=['red', 'blue']))
+            #
         )
 
         layout = lay1 + lay2 + lay3
@@ -93,6 +113,54 @@ class StrategyView(object):
 
         print(layout)
         hv.save(layout, self.inc_dir + "inc_all.html")
+
+    def html_VaR_ES(self):
+        df = self.df.copy()
+        df.sort_values('date', inplace=True)
+        days = [5, 10, 20, 40, 60, 120, 240, 480, 720, 960, 1200]
+        df_VaR, df_ES = pd.DataFrame(), pd.DataFrame()
+        for day in days:
+            returns = df['net_value5'].pct_change(day)
+            returns.dropna(inplace=True)
+            df_tmp = cal_VaR_and_ES(returns)
+            df_VaR = pd.concat([df_VaR, df_tmp[['VaR']].rename(columns={'VaR': str(day) + '个交易日'})], axis=1)
+            df_ES = pd.concat([df_ES, df_tmp[['ES']].rename(columns={'ES': str(day) + '个交易日'})], axis=1)
+            # df_VaR.columns = pd.MultiIndex.from_tuples([('持有交易日：' + str(day), 'VaR'), ('持有交易日：' + str(day), 'ES')])
+            # df_VRES = pd.concat([df_VRES, df_VaR], axis=1)
+        # df_VaR = df_VaR.applymap(lambda x: '{:.2%}'.format(x))
+        df_VaR = df_VaR.round(4) * 100
+        # df_VaR.insert(0, '置信区间', df_VaR.index)
+        # df_VaR.reset_index(inplace=True, drop=True)
+        # df_ES = df_ES.applymap(lambda x: '{:.2%}'.format(x))
+        df_ES = df_ES.round(4) * 100
+        # df_ES.insert(0, '置信区间', df_ES.index)
+        # df_ES.reset_index(inplace=True, drop=True)
+
+        table1 = df_VaR.hvplot.heatmap(
+            x='columns', y='index',
+            title="组合 {}，任意持有期对应置信区间的 VaR(上) & ES(下)，算法：历史模拟法【{} - {}】，单位：%".format(
+                self.stra_name, str(df.iloc[0]['date'])[:10], str(df.iloc[-1]['date'])[:10], ),
+            cmap=["#75968f", "#a5bab7", "#c9d9d3", "#e2e2e2", "#dfccce", "#ddb7b1", "#cc7878", "#933b41"],
+            symmetric=True,  # 0 为中间值
+            width=self.ld.width2, height=300).opts(fontsize={'title': 15, 'xticks': 12, 'yticks': 12})
+        table2 = df_ES.hvplot.heatmap(
+            x='columns', y='index',
+            cmap=["#75968f", "#a5bab7", "#c9d9d3", "#e2e2e2", "#dfccce", "#ddb7b1", "#cc7878", "#933b41"],
+            symmetric=True,  # 0 为中间值
+            xaxis=False, width=self.ld.width2, height=300).opts(fontsize={'title': 15, 'xticks': 12, 'yticks': 12})
+
+        # table1 = df_VaR.hvplot.table(sortable=True, selectable=True,
+        #                              title="组合 {}，任意持有期对应置信区间的VaR，（算法：历史模拟法）".format(
+        #                                  self.stra_name))
+        # table2 = df_ES.hvplot.table(sortable=True, selectable=True,
+        #                             title="组合 {}，任意持有期对应置信区间的ES，（算法：历史模拟法）".format(
+        #                                 self.stra_name))
+
+        layout = table1 * hv.Labels(table1).opts(padding=0) + table2 * hv.Labels(table2).opts(padding=0)
+        layout.opts().cols(1)
+
+        print(layout)
+        hv.save(layout, self.inc_dir + "inc_VaR_ES.html")
 
     def html_des(self):
         df_des, the_date = self.ld.get_cap_and_money_for_strategy(self.stra_name)
@@ -107,5 +175,6 @@ if __name__ == '__main__':
     stra_list = ["alpha_one", "per_2", "per_2_4"]
     for stra in stra_list:
         alpha = StrategyView(ld=LoadData(), stra_name=stra)
-        alpha.html_all()
-        alpha.html_des()
+        # alpha.html_all()
+        # alpha.html_des()
+        alpha.html_VaR_ES()

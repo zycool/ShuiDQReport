@@ -70,7 +70,7 @@ class ViewHvplot:
 
     def _load_df_loss(self):
         if self.df_loss is None:
-            df_loss = pd.DataFrame(self.db_stat['trade_loss'].find({}, {"_id": 0, }))
+            df_loss = pd.DataFrame(self.db_stat['trade_loss_new'].find({}, {"_id": 0, }))
             # df_loss['mis_sum'] = df_loss.mis_sum.astype(int)
             # df_loss = df_loss.round(5, columns=['dogs', 'cats'])
             df_loss = df_loss.astype(
@@ -161,6 +161,7 @@ class ViewHvplot:
         df['mis_sum'] = df.mis_sum / 10000
         df['mis_cent'] = df.mis_cent.round(4) * 1000
         df['date'] = pd.to_datetime(df.date)
+        df.drop(index=df.mis_cent.idxmin(), inplace=True)  # 为了除掉4.28日的异常值
         if freq == "礼拜":
             df['freq_day'] = df.date.map(lambda x: str(x - datetime.timedelta(days=x.weekday()))[5:10])
             res_file = self.inc_dir + "inc_freq_weekly.html"
@@ -171,7 +172,6 @@ class ViewHvplot:
             return
         freqs = df.freq_day.unique().tolist()
         df = df[df.freq_day.isin(freqs[-count:])]
-        # df.drop(index=df.mis_cent.idxmin(), inplace=True)  # 为了除掉4.28日的异常值
         boxplot_sum = df.hvplot.box(y='mis_sum', by='freq_day', shared_axes=False, tools=['hover'],
                                     title="损失金额（与13：05分相比）分布图，平均值：{:.2f}，单位：万".format(
                                         df.mis_sum.mean()), width=int(self.width / 2), legend=False,
@@ -199,21 +199,30 @@ class ViewHvplot:
         df = self.df_loss.iloc[-count:].copy()
         df['date'] = pd.to_datetime(df.date)
         df['date'] = df.date.map(lambda x: str(x)[5:10])
-        df['mis_sum'] = df.mis_sum / 10000
-        df['mis_cent'] = df.mis_cent.round(4) * 1000
 
-        res_hv1 = df.hvplot.bar(
-            title="损失金额（与13：05分相比），平均值：{:.2f}，单位：万".format(df.mis_sum.mean()),
-            x='date', xlabel='最近{}个交易日'.format(count),
-            y=['mis_sum', ], ylabel="摩擦损失金额", )
-        res_hv2 = df.hvplot.bar(
-            title="损失比例 = 损失金额 / 累计成交金额，平均值：{:.1f}，单位：千分位".format(df.mis_cent.mean()),
-            x='date', xlabel='最近{}个交易日'.format(count),
-            y=['mis_cent', ], ylabel="千分比", )
-        # line_zero = hv.HLine(0).opts(color='red', line_width=1.5)
+        df_plot = df[['date', 'trade_sum', 'mis_sum', 'mis_cent', 'sub_sum', 'sub_mis_cent']].copy()
+        df_plot['sub_mis_sum'] = (df_plot.trade_sum - abs(df_plot.sub_sum)) * df_plot.sub_mis_cent
+        df_plot.loc[df_plot['sub_sum'] == 0, 'sub_mis_sum'] = df_plot[df_plot['sub_sum'] == 0]['mis_sum']
+        df_plot.loc[df_plot['sub_sum'] == 0, 'sub_mis_cent'] = df_plot[df_plot['sub_sum'] == 0]['mis_cent']
+        # print(df_plot[df_plot['sub_sum'] == 0])
+
+        df_plot['含申赎'] = df_plot.mis_sum / 10000
+        df_plot['剔申赎'] = df_plot.sub_mis_sum / 10000
+
+        res_hv1 = df_plot.hvplot.bar(
+            title="损失金额（13：05）单位：万，平均值(含申赎)：{:.2f}，平均值(剔申赎)：{:.2f}".format(
+                df_plot['含申赎'].mean(), df_plot['剔申赎'].mean()),
+            x='date', xlabel='最近{}个交易日'.format(count), y=['含申赎', '剔申赎'], ylabel="摩擦损失金额")
+
+        df_plot['含申赎'] = df_plot.mis_cent.round(6) * 10000
+        df_plot['剔申赎'] = df_plot.sub_mis_cent.round(6) * 10000
+        res_hv2 = df_plot.hvplot.bar(
+            title="损失比例，单位：万分位，平均值(含申赎)：{:.2f}，平均值(剔申赎)：{:.2f}".format(
+                df_plot['含申赎'].mean(), df_plot['剔申赎'].mean()),
+            x='date', xlabel='最近{}个交易日'.format(count), y=['含申赎', '剔申赎'], ylabel="万分位")
         res_hv = res_hv1 + res_hv2
         res_hv.opts(
-            opts.Bars(show_grid=True, shared_axes=False, width=int(self.width / 2)),
+            opts.Bars(show_grid=True, shared_axes=False, width=int(self.width / 2), xrotation=90),
         ).cols(2)
 
         print(res_hv)
@@ -221,37 +230,73 @@ class ViewHvplot:
 
     def html_line_and_area(self):
         df = self.df_loss.copy()
-        df['mis_sum'] = df.mis_sum / 10000
-        df['mis_cent'] = df.mis_cent.round(4) * 1000
         df['date'] = pd.to_datetime(df.date)
+        df.drop(index=df.mis_cent.idxmin(), inplace=True)  # 为了除掉4.28日的异常值
 
-        df_plot = df[['date', 'mis_sum', 'mis_cent']].copy()
-        # df_plot.drop(index=df_plot.mis_cent.idxmin(), inplace=True)  # 为了除掉4.28日的异常值
-        df_plot['ma10'] = df['mis_sum'].rolling(10).mean()
-        df_plot['ma10_cent'] = df['mis_cent'].rolling(10).mean()
+        df_plot = df[['date', 'trade_sum', 'mis_sum', 'mis_cent', 'sub_sum', 'sub_mis_cent']].copy()
+        df_plot['sub_mis_sum'] = (df_plot.trade_sum - abs(df_plot.sub_sum)) * df_plot.sub_mis_cent
+        df_plot.loc[df_plot['sub_sum'] == 0, 'sub_mis_sum'] = df_plot[df_plot['sub_sum'] == 0]['mis_sum']
+        df_plot.loc[df_plot['sub_sum'] == 0, 'sub_mis_cent'] = df_plot[df_plot['sub_sum'] == 0]['mis_cent']
+        # print(df_plot[df_plot['sub_sum'] == 0])
+        # print(df_plot.loc[df_plot.sub_mis_cent.idxmax()])
 
-        x_lable = "全量区间【{} - {}】".format(str(df_plot.iloc[0]['date'])[:10], str(df_plot.iloc[-1]['date'])[:10])
+        df_plot['mis_sum'] = df_plot.mis_sum / 10000
+        df_plot['ma10'] = df_plot['mis_sum'].rolling(10).mean()
+        df_plot['sub_mis_sum'] = df_plot.sub_mis_sum / 10000
+        df_plot['sub_ma10'] = df_plot['sub_mis_sum'].rolling(10).mean()
 
-        area1 = df_plot.hvplot.area(x='date', y='mis_sum', label='金额(万元)',
-                                    xlabel=x_lable, ylabel="摩擦损失金额",
-                                    title="摩擦损失金额，截至日期：{}".format(str(df_plot.iloc[-1]['date'])[:10]),
-                                    )
-        line1 = df_plot.hvplot.line(x='date', y='ma10', color='Red', label='金额--MA10')
-        layout1 = area1 * line1
-        layout1.opts(
-            legend_position='bottom_left', width=int(self.width / 2)
-        )
+        df_plot['mis_cent'] = df_plot.mis_cent.round(4) * 1000
+        df_plot['ma10_cent'] = df_plot['mis_cent'].rolling(10).mean()
+        # df_plot['sub_mis_cent'] = df_plot.sub_mis_cent.round(4) * 1000
+        # df_plot['sub_ma10_cent'] = df_plot['sub_mis_cent'].rolling(10).mean()
 
-        area2 = df_plot.hvplot.area(x='date', y='mis_cent', label='比例(千分比)',
-                                    xlabel=x_lable, ylabel="千分比",
-                                    title="摩擦损失比例，截至日期：{}".format(str(df_plot.iloc[-1]['date'])[:10])
-                                    )
-        line2 = df_plot.hvplot.line(x='date', y='ma10_cent', color='Red', label='比例--MA10', )
-        layout2 = area2 * line2
-        layout2.opts(
-            legend_position='bottom_left', width=int(self.width / 2)
-        )
-        layout = layout1 + layout2
+        x_lable = "全量区间【{} - {}】，损失金额（参照13：05），单位：万".format(
+            str(df_plot.iloc[0]['date'])[:10], str(df_plot.iloc[-1]['date'])[:10])
+        x_lable2 = "全量区间【{} - {}】，损失比例(千分比)，单位：千分比".format(
+            str(df_plot.iloc[0]['date'])[:10], str(df_plot.iloc[-1]['date'])[:10])
+
+        area1_0 = df_plot.hvplot.area(x='date', y='mis_sum', label='含申赎',
+                                      xlabel=x_lable, ylabel="摩擦损失金额",
+                                      title="损失金额(含申赎)    -->> MEAN：{:.1f}，MA10：{:.1f}".format(
+                                          df_plot.mis_sum.mean(), df_plot.iloc[-1]['ma10'])
+                                      )
+        line1_0 = df_plot.hvplot.line(x='date', y='ma10', c='red', label='MA10(含申赎)')
+        layout1_0 = area1_0 * line1_0
+        layout1_0.opts(legend_position='bottom_left', width=int(self.width / 2))
+
+        area1_1 = df_plot.hvplot.area(x='date', y='mis_cent', label='含申赎',
+                                      xlabel=x_lable2, ylabel="摩擦损失比例",
+                                      title="损失比例(含申赎)    -->> MEAN：{:.1f}，MA10：{:.1f}".format(
+                                          df_plot.mis_cent.mean(), df_plot.iloc[-1]['ma10_cent'])
+                                      )
+        line1_1 = df_plot.hvplot.line(x='date', y='ma10_cent', c='red', label='MA10(含申赎)')
+        layout1_1 = area1_1 * line1_1
+        layout1_1.opts(legend_position='bottom_left', width=int(self.width / 2))
+
+        df_plot.drop(index=df_plot.sub_mis_cent.idxmax(), inplace=True)  # 为了除掉2022-09-30日的异常值
+        df_plot['sub_mis_cent'] = df_plot.sub_mis_cent.round(4) * 1000
+        df_plot['sub_ma10_cent'] = df_plot['sub_mis_cent'].rolling(10).mean()
+
+        area2_0 = df_plot.hvplot.area(x='date', y='sub_mis_sum', label='不含申赎',
+                                      xlabel=x_lable, ylabel="摩擦损失金额",
+                                      title="损失金额(不含申赎) -->> MEAN：{:.1f}，MA10：{:.1f}".format(
+                                          df_plot.sub_mis_sum.mean(), df_plot.iloc[-1]['sub_ma10'])
+                                      )
+        line2_0 = df_plot.hvplot.line(x='date', y='sub_ma10', c='red', label='MA10(不含)', )
+        layout2_0 = area2_0 * line2_0
+        layout2_0.opts(legend_position='bottom_left', width=int(self.width / 2))
+
+        area2_1 = df_plot.hvplot.area(x='date', y='sub_mis_cent', label='不含申赎',
+                                      xlabel=x_lable2, ylabel="摩擦损失比例",
+                                      title="损失比例(不含申赎) -->> MEAN：{:.1f}，MA10：{:.1f}".format(
+                                          df_plot.sub_mis_cent.mean(), df_plot.iloc[-1]['sub_ma10_cent'])
+                                      )
+
+        line2_1 = df_plot.hvplot.line(x='date', y='sub_ma10_cent', c='red', label='MA10(不含)', )
+        layout2_1 = area2_1 * line2_1
+        layout2_1.opts(legend_position='bottom_left', width=int(self.width / 2))
+
+        layout = layout1_0 + layout1_1 + layout2_0 + layout2_1
         layout.opts(shared_axes=False).cols(2)
         print(layout)
         hv.save(layout, self.inc_dir + "inc_area_and_lines.html")
@@ -259,7 +304,7 @@ class ViewHvplot:
 
 if __name__ == '__main__':
     vh = ViewHvplot()
-    vh.save_show()
+    # vh.save_show()
     vh.html_laest_sum_and_cent()
-    vh.html_by_range()
+    # vh.html_by_range()
     vh.html_line_and_area()

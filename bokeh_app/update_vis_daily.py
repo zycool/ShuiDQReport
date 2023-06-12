@@ -27,6 +27,7 @@ def proc_open():
         alpha = StrategyView(ld=ld, stra_name=stra)
         alpha.html_all()
         alpha.html_des()
+        alpha.html_VaR_ES()
 
     print("各类单因子数据...")
     factors = ['F1', 'mv_vol', 'F_C']

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %} 策略 | 碓全屿阔 {% endblock %}
+{% block title %} 各策略 | VaR & ES 对比 {% endblock %}
 
 {% block extrahead %}
 {% endblock %}
@@ -13,8 +13,9 @@
         <div class="col col-lg-1">
         </div>
         <div class="col-md-auto">
-            <h2>策略 | 碓全屿阔</h2>
-            {% include 'mult_factor/per_2_4/inc_all.html' %}
+            <h2>各策略 VaR & ES 对比</h2>
+            {% include 'mult_factor/alpha_one/inc_VaR_ES.html' %}
+            {% include 'mult_factor/per_2/inc_VaR_ES.html' %}
             {% include 'mult_factor/per_2_4/inc_VaR_ES.html' %}
         </div>
         <div class="col col-lg-2">
