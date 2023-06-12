@@ -48,6 +48,7 @@ class StatisticView(object):
         df_cap.reset_index(inplace=True, drop=True)
         df_cap['gro_mean_chg_per'] = df_cap.gro_mean_chg.round(4) * 100
         df_cap['color'] = np.sign(df_cap['gro_mean_chg'].tolist())
+        df_cap['color'].replace([1, -1], ['red', 'blue'], inplace=True)
         if daily:
             title = "交易日：{} 市值分组平均涨跌幅".format(df.iloc[0].date)
         else:
@@ -73,6 +74,7 @@ class StatisticView(object):
         a = df_chg["chg_range"].value_counts(sort=False)
         df_plot = pd.DataFrame({'涨跌幅区间': a.index, "股票数量": a.values})
         df_plot['color'] = np.sign(df_plot['涨跌幅区间'].tolist())
+        df_plot['color'].replace([1, 0, -1], ['red', 'grey', 'blue'], inplace=True)
         bar_chg = df_plot.hvplot.bar(x="涨跌幅区间", y="股票数量", width=self.ld.width_h, c="color", rot=90,
                                      shared_axes=False, xlabel="涨跌幅区间", title=title)
         return bar_chg
