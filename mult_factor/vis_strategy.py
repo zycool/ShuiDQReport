@@ -175,6 +175,6 @@ if __name__ == '__main__':
     stra_list = ["alpha_one", "per_2", "per_2_4"]
     for stra in stra_list:
         alpha = StrategyView(ld=LoadData(), stra_name=stra)
-        # alpha.html_all()
-        # alpha.html_des()
+        alpha.html_all()
+        alpha.html_des()
         alpha.html_VaR_ES()

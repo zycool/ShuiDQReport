@@ -73,8 +73,8 @@ class ViewHvplot:
             df_loss = pd.DataFrame(self.db_stat['trade_loss_new'].find({}, {"_id": 0, }))
             # df_loss['mis_sum'] = df_loss.mis_sum.astype(int)
             # df_loss = df_loss.round(5, columns=['dogs', 'cats'])
-            df_loss = df_loss.astype(
-                {'mis_sum': 'int', 'mis_mean_sum': 'int', 'b_mis_sum': 'int', 'b_mis_mean_sum': 'int', })
+            df_loss = df_loss.astype({'mis_sum': 'int', 'mis_mean_sum': 'int'})
+            df_loss.sort_values('date', inplace=True)
             self.df_loss = df_loss
         return self.df_loss
 
@@ -173,7 +173,7 @@ class ViewHvplot:
         freqs = df.freq_day.unique().tolist()
         df = df[df.freq_day.isin(freqs[-count:])]
         boxplot_sum = df.hvplot.box(y='mis_sum', by='freq_day', shared_axes=False, tools=['hover'],
-                                    title="损失金额（与13：05分相比）分布图，平均值：{:.2f}，单位：万".format(
+                                    title="损失金额分布图，平均值：{:.2f}，单位：万".format(
                                         df.mis_sum.mean()), width=int(self.width / 2), legend=False,
                                     xlabel=f'最近 {count} 个{freq} 损失金额的箱体分布图', ylabel="损失金额，单位：万",
                                     )
@@ -200,7 +200,8 @@ class ViewHvplot:
         df['date'] = pd.to_datetime(df.date)
         df['date'] = df.date.map(lambda x: str(x)[5:10])
 
-        df_plot = df[['date', 'trade_sum', 'mis_sum', 'mis_cent', 'sub_sum', 'sub_mis_cent']].copy()
+        df_plot = df[['date', 'trade_sum', 'mis_sum', 'mis_cent', 'mis_mean_sum', 'mis_mean_cent', 'sub_sum',
+                      'sub_mis_cent']].copy()
         df_plot['sub_mis_sum'] = (df_plot.trade_sum - abs(df_plot.sub_sum)) * df_plot.sub_mis_cent
         df_plot.loc[df_plot['sub_sum'] == 0, 'sub_mis_sum'] = df_plot[df_plot['sub_sum'] == 0]['mis_sum']
         df_plot.loc[df_plot['sub_sum'] == 0, 'sub_mis_cent'] = df_plot[df_plot['sub_sum'] == 0]['mis_cent']
@@ -208,18 +209,19 @@ class ViewHvplot:
 
         df_plot['含申赎'] = df_plot.mis_sum / 10000
         df_plot['剔申赎'] = df_plot.sub_mis_sum / 10000
-
+        df_plot['平均价'] = df_plot.mis_mean_sum / 10000
         res_hv1 = df_plot.hvplot.bar(
-            title="损失金额（13：05）单位：万，平均值(含申赎)：{:.2f}，平均值(剔申赎)：{:.2f}".format(
+            title="损失金额，平均值(含申赎)：{:.2f}，平均值(剔申赎)：{:.2f}     单位：万".format(
                 df_plot['含申赎'].mean(), df_plot['剔申赎'].mean()),
-            x='date', xlabel='最近{}个交易日'.format(count), y=['含申赎', '剔申赎'], ylabel="摩擦损失金额")
+            x='date', xlabel='最近{}个交易日'.format(count), y=['含申赎', '剔申赎', '平均价'], ylabel="摩擦损失金额")
 
         df_plot['含申赎'] = df_plot.mis_cent.round(6) * 10000
         df_plot['剔申赎'] = df_plot.sub_mis_cent.round(6) * 10000
+        df_plot['平均价'] = df_plot.mis_mean_cent.round(6) * 10000
         res_hv2 = df_plot.hvplot.bar(
-            title="损失比例，单位：万分位，平均值(含申赎)：{:.2f}，平均值(剔申赎)：{:.2f}".format(
+            title="损失比例，平均值(含申赎)：{:.2f}，平均值(剔申赎)：{:.2f}     单位：万分位".format(
                 df_plot['含申赎'].mean(), df_plot['剔申赎'].mean()),
-            x='date', xlabel='最近{}个交易日'.format(count), y=['含申赎', '剔申赎'], ylabel="万分位")
+            x='date', xlabel='最近{}个交易日'.format(count), y=['含申赎', '剔申赎', '平均价'], ylabel="万分位")
         res_hv = res_hv1 + res_hv2
         res_hv.opts(
             opts.Bars(show_grid=True, shared_axes=False, width=int(self.width / 2), xrotation=90),
@@ -228,8 +230,8 @@ class ViewHvplot:
         print(res_hv)
         hv.save(res_hv, self.inc_dir + "inc_laest_sum_and_cent_bar.html")
 
-    def html_line_and_area(self):
-        df = self.df_loss.copy()
+    def html_line_and_area(self, start_date='20190101'):
+        df = self.df_loss[self.df_loss['date'] > start_date].copy()
         df['date'] = pd.to_datetime(df.date)
         df.drop(index=df.mis_cent.idxmin(), inplace=True)  # 为了除掉4.28日的异常值
 
@@ -250,14 +252,12 @@ class ViewHvplot:
         # df_plot['sub_mis_cent'] = df_plot.sub_mis_cent.round(4) * 1000
         # df_plot['sub_ma10_cent'] = df_plot['sub_mis_cent'].rolling(10).mean()
 
-        x_lable = "全量区间【{} - {}】，损失金额（参照13：05），单位：万".format(
-            str(df_plot.iloc[0]['date'])[:10], str(df_plot.iloc[-1]['date'])[:10])
-        x_lable2 = "全量区间【{} - {}】，损失比例(千分比)，单位：千分比".format(
-            str(df_plot.iloc[0]['date'])[:10], str(df_plot.iloc[-1]['date'])[:10])
+        x_lable = "全量区间【{} - {}】".format(str(df_plot.iloc[0]['date'])[:10], str(df_plot.iloc[-1]['date'])[:10])
+        x_lable2 = "全量区间【{} - {}】".format(str(df_plot.iloc[0]['date'])[:10], str(df_plot.iloc[-1]['date'])[:10])
 
         area1_0 = df_plot.hvplot.area(x='date', y='mis_sum', label='含申赎',
                                       xlabel=x_lable, ylabel="摩擦损失金额",
-                                      title="损失金额(含申赎)    -->> MEAN：{:.1f}，MA10：{:.1f}".format(
+                                      title="损失金额(含申赎)    -->> MEAN：{:.1f}，MA10：{:.1f}     单位：万".format(
                                           df_plot.mis_sum.mean(), df_plot.iloc[-1]['ma10'])
                                       )
         line1_0 = df_plot.hvplot.line(x='date', y='ma10', c='red', label='MA10(含申赎)')
@@ -266,7 +266,7 @@ class ViewHvplot:
 
         area1_1 = df_plot.hvplot.area(x='date', y='mis_cent', label='含申赎',
                                       xlabel=x_lable2, ylabel="摩擦损失比例",
-                                      title="损失比例(含申赎)    -->> MEAN：{:.1f}，MA10：{:.1f}".format(
+                                      title="损失比例(含申赎)    -->> MEAN：{:.1f}，MA10：{:.1f}     单位：千分位".format(
                                           df_plot.mis_cent.mean(), df_plot.iloc[-1]['ma10_cent'])
                                       )
         line1_1 = df_plot.hvplot.line(x='date', y='ma10_cent', c='red', label='MA10(含申赎)')
@@ -304,7 +304,8 @@ class ViewHvplot:
 
 if __name__ == '__main__':
     vh = ViewHvplot()
-    # vh.save_show()
+    vh.save_show()
     vh.html_laest_sum_and_cent()
-    # vh.html_by_range()
-    vh.html_line_and_area()
+    vh.html_by_range()
+    vh.html_line_and_area(start_date='20200101')
+    vh.close()

@@ -13,7 +13,7 @@ sys.path.append("D:/Neo/WorkPlace/ShuiDQReport/")
 import pandas as pd
 import holoviews as hv
 from holoviews import opts
-import hvplot.pandas  # noqa
+# import hvplot.pandas  # noqa
 from bokeh.io import curdoc
 from bokeh.layouts import layout
 from bokeh.models import Slider, Button
@@ -112,3 +112,4 @@ stream = hv.streams.Stream.define('策略运行天数', end_index=df_data.index.
 dmap = hv.DynamicMap(plot_dyn, streams=[stream])
 
 doc = modify_doc(curdoc())
+doc.title = '策略净值走势动态展示'

@@ -44,6 +44,37 @@ class LoadData(object):
 
         self.tmp_dates_chg_df = None
 
+    def _load_trade_records(self, start_date: str, end_date: str, order_type: str):
+        if order_type == 'JG':
+            table = self.db_stat['delivery_order']
+            use_cols = ['发生日期', "证券代码", "证券名称", "业务名称", "成交价格", "成交数量", "成交时间", '成交金额']
+        elif order_type == 'DZ':
+            table = self.db_stat['statement_of_account']
+            use_cols = ['发生日期', "成交时间", "业务名称", "证券代码", "证券名称", "成交价格", "成交金额", "股份余额",
+                        '发生金额', '资金本次余额']
+        else:
+            raise Exception("要不交割单，要不对账单！！！")
+
+        get_cols = dict(zip(use_cols, [1] * len(use_cols)))
+        get_cols.update({"_id": 0})
+
+        df = pd.DataFrame(table.find(
+            {"发生日期": {'$lte': end_date, '$gte': start_date}}, get_cols, batch_size=100000))
+        df.rename(columns={'发生日期': 'date', '证券代码': 'code'}, inplace=True)
+        return df
+
+    def load_latest_month_statement_of_account(self, start_date='20230101'):
+        """拉对账单"""
+        if self.the_date is None:
+            self.get_the_date()
+        end_date = self.the_date.replace('-', '')
+        df = self._load_trade_records(start_date, end_date, order_type='DZ')
+        df['date'] = df.date.apply(lambda x: x[:4] + "-" + x[4:6] + "-" + x[-2:])
+        df['Date Time'] = df.date + ' ' + df['成交时间']
+        df['Date Time'] = pd.to_datetime(df['Date Time'])
+        return df
+        # return df[df['业务名称'].isin(['证券买入', '证券卖出'])].copy()
+
     def get_the_date(self):
         dates = list(self.db_stra['factor_weights'].find({}, {"_id": 0, "date": 1}).sort('date', -1).limit(2))
         the_date = dates[0]["date"]
@@ -71,7 +102,8 @@ class LoadData(object):
         return df_cap
 
     def get_trade_loss(self):
-        df_loss = pd.DataFrame(self.db_stat['trade_loss'].find({}, {"_id": 0, }))
+        df_loss = pd.DataFrame(self.db_stat['trade_loss_new'].find({}, {"_id": 0, }))
+        df_loss.sort_values('date', inplace=True)
         return df_loss
 
     def __filter_blacklist(self, df_from, the_day=None):

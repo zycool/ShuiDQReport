@@ -8,4 +8,5 @@
 """
 from bokeh.command.bootstrap import main
 
-main(["bokeh", "serve", "--show", "--allow-websocket-origin=*:5006", "app_alpha_one.py"])
+# main(["bokeh", "serve", "--show", "--allow-websocket-origin=*:5006", "app_alpha_one.py"])
+main(["bokeh", "serve", "--show", "--allow-websocket-origin=*:5006", "app_trade_detail.py"])
