@@ -76,4 +76,4 @@ if __name__ == '__main__':
         proc_open()
     else:
         proc_close()
-        # proc_open()
+        proc_open()

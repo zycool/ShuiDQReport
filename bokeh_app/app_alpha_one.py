@@ -63,7 +63,7 @@ def plot_dyn(end_index):
     lay2 = back_spikes * turn_spikes
 
     return (lay1 + lay2).opts(
-        opts.Spikes(width=ld.width3, height=200, line_width=0.25, tools=['hover']),
+        opts.Spikes(framewise=True, width=ld.width3, height=200, line_width=0.25, tools=['hover']),
         opts.Curve(framewise=True, height=ld.high, width=ld.width3, tools=['hover'], title=stra_title),
     ).cols(1)
 

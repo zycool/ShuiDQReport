@@ -4,7 +4,7 @@ echo  flying...
 call "./venv/Scripts/activate"
 echo.
 cd bokeh_app
-python main.py
+python start_app.py
 echo.
 
 pause

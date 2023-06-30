@@ -217,3 +217,19 @@ def get_week_month_date(week=False, month=False):
             hours=23, minutes=59, seconds=59)
         return str(this_month_start)[:10], str(this_month_end)[:10]
     return str(today), str(today)
+
+
+def stamp2time(timeStamp, fmt='T'):
+    """
+    功能：将时间戳转换成日期函数 例如：1606708276268 ==》2020-11-30 11:51:16
+    参数：timeStamp 时间戳，类型 double 例如：1606708276268
+    返回值：日期， 类型：字符串 2020-11-30 11:51:16
+    """
+    time_local = time.localtime(timeStamp / 1000)
+    if fmt == 'T':
+        dt = time.strftime("%Y-%m-%d", time_local)
+    elif fmt == 'D':
+        dt = time.strftime("%H:%M:%S", time_local)
+    else:
+        dt = time.strftime("%Y-%m-%d %H:%M:%S", time_local)
+    return dt

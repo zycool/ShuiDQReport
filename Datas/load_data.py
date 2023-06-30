@@ -39,6 +39,7 @@ class LoadData(object):
         self.width1 = int(screen_size[0] * 1 / 3)
         self.width_h = int(screen_size[0] / 2)
         self.width2 = int(screen_size[0] * 2 / 3)
+        self.width25 = int(screen_size[0] * 2 / 5)
         self.width3 = int(screen_size[0] * 0.95)
         self.high = self.width1
 
@@ -71,9 +72,10 @@ class LoadData(object):
         df = self._load_trade_records(start_date, end_date, order_type='DZ')
         df['date'] = df.date.apply(lambda x: x[:4] + "-" + x[4:6] + "-" + x[-2:])
         df['Date Time'] = df.date + ' ' + df['成交时间']
-        df['Date Time'] = pd.to_datetime(df['Date Time'])
-        return df
-        # return df[df['业务名称'].isin(['证券买入', '证券卖出'])].copy()
+        df = trans_str_to_float64(df, trans_cols=['成交价格', '成交金额', '股份余额', '发生金额', '资金本次余额', ])
+        df.dropna(inplace=True)
+        # return df
+        return df[df['业务名称'].isin(['证券买入', '证券卖出'])].copy()
 
     def get_the_date(self):
         dates = list(self.db_stra['factor_weights'].find({}, {"_id": 0, "date": 1}).sort('date', -1).limit(2))
