@@ -51,7 +51,7 @@ def proc_open():
     vh.save_show()
     vh.html_laest_sum_and_cent()
     vh.html_by_range()
-    vh.html_line_and_area(start_date='20200101')
+    vh.html_line_and_area(start_date='20190101')
     vh.close()
 
     print("复合因子F_C...")

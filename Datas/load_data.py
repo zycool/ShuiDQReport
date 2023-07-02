@@ -104,7 +104,7 @@ class LoadData(object):
         return df_cap
 
     def get_trade_loss(self):
-        df_loss = pd.DataFrame(self.db_stat['trade_loss_new'].find({}, {"_id": 0, }))
+        df_loss = pd.DataFrame(self.db_stat['trade_loss_2307'].find({}, {"_id": 0, }))
         df_loss.sort_values('date', inplace=True)
         return df_loss
 

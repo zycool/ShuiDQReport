@@ -214,6 +214,6 @@ class AlphaOweView(object):
 if __name__ == '__main__':
     alpha = AlphaOweView()
     alpha.alpha_and_trade_loss()
-    alpha.html_alpha_all()
-    alpha.html_alpha_dmap()
-    alpha.html_alpha_more_value()
+    # alpha.html_alpha_all()
+    # alpha.html_alpha_dmap()
+    # alpha.html_alpha_more_value()
